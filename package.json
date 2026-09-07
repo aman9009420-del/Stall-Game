@@ -1,0 +1,17 @@
+{
+  "name": "stallwala",
+  "version": "1.0.0",
+  "description": "3D street food stall tycoon",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8080 --bind 0.0.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aman9009420-del/Stall-Game.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.160.1"
+  }
+}

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>StallWala — 3D Street Food Tycoon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@500;700;800&family=Nunito:wght@600;800&family=Teko:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./lib/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="world-ui"></div>
+  <div id="toasts"></div>
+
+  <div id="loader">
+    <div class="loader-pot"></div>
+    <div class="loader-text" data-i18n="loading">FIRING UP THE STOVE…</div>
+  </div>
+
+  <div id="menu" class="overlay hidden">
+    <div class="panel">
+      <div class="brand" data-i18n="title">STALLWALA</div>
+      <div class="subtitle" data-i18n="subtitle">3D Street Food Tycoon</div>
+      <div class="menu-btns">
+        <button class="btn gold" id="btn-play" data-i18n="play">Open Stall</button>
+        <button class="btn" id="btn-continue" data-i18n="continue">Continue</button>
+        <button class="btn ghost" id="btn-showcase" data-i18n="showcase">Inspect Stall</button>
+        <button class="btn ghost" id="btn-how" data-i18n="how">How to Play</button>
+        <button class="btn ghost" id="btn-settings" data-i18n="settings">Settings</button>
+      </div>
+      <div class="features">
+        <span data-i18n="feat1"></span>
+        <span data-i18n="feat2"></span>
+        <span data-i18n="feat3"></span>
+        <span data-i18n="feat4"></span>
+        <span data-i18n="feat5"></span>
+        <span data-i18n="feat6"></span>
+        <span data-i18n="feat7"></span>
+        <span data-i18n="feat8"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="photo-hint" class="hidden" data-i18n="photoHint"></div>
+
+  <div id="hud" class="hidden">
+    <div class="topbar">
+      <div class="chip"><span data-i18n="day">Day</span><b id="hud-day">1</b></div>
+      <div class="chip clock-wrap">
+        <span id="hud-clock">08:00 · OPEN</span>
+        <div class="clock-track"><i id="hud-clockbar"></i></div>
+      </div>
+      <div class="chip money"><span data-i18n="money">Rupees</span><b id="hud-money">₹420</b></div>
+      <div class="chip">
+        <span data-i18n="rep">Reputation</span>
+        <b id="hud-rep">58</b>
+        <div class="rep-bar"><i id="hud-repbar"></i></div>
+      </div>
+      <div class="chip"><span data-i18n="combo">Combo</span><b id="hud-combo">0</b></div>
+    </div>
+
+    <div class="side left">
+      <div class="card" style="flex:1">
+        <h3 data-i18n="stock">Stock</h3>
+        <div class="stock-list" id="stock-list"></div>
+      </div>
+    </div>
+    <div class="side right">
+      <div class="card" style="flex:1">
+        <h3 data-i18n="orders">Orders</h3>
+        <div class="order-list" id="order-list"></div>
+      </div>
+    </div>
+
+    <div class="burners-ui" id="burners-ui"></div>
+    <div class="combo-pop" id="combo-pop">COMBO x2</div>
+
+    <div class="bottom">
+      <div class="recipes" id="recipe-bar"></div>
+      <div class="tools">
+        <button class="btn small gold" id="btn-serve" data-i18n="serve">Serve</button>
+        <button class="btn small" id="btn-shop-open" data-i18n="shop">Shop</button>
+        <button class="btn small ghost" id="btn-pause" data-i18n="pause">Paused</button>
+        <button class="btn small ghost" id="btn-close-day" data-i18n="closeEarly">Close Stall</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-pause" class="modal-wrap hidden">
+    <div class="panel">
+      <div class="brand" style="font-size:54px" data-i18n="pause">Paused</div>
+      <div class="menu-btns" style="margin-top:16px">
+        <button class="btn gold" id="btn-resume" data-i18n="resume">Back to Stall</button>
+        <button class="btn" id="btn-pause-shop" data-i18n="shop">Bazaar Shop</button>
+        <button class="btn ghost" id="btn-pause-how" data-i18n="how">How to Play</button>
+        <button class="btn ghost" id="btn-pause-set" data-i18n="settings">Settings</button>
+        <button class="btn ghost" id="btn-quit-menu" data-i18n="quitMenu">Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-shop" class="modal-wrap hidden">
+    <div class="panel wide">
+      <div class="brand" style="font-size:48px" data-i18n="shop">Bazaar Shop</div>
+      <div class="tabs">
+        <button class="tab on" data-tab="recipes" data-i18n="recipes">Recipes</button>
+        <button class="tab" data-tab="upgrades" data-i18n="upgrades">Upgrades</button>
+        <button class="tab" data-tab="decor" data-i18n="decor">Decor</button>
+        <button class="tab" data-tab="staff" data-i18n="staff">Staff</button>
+        <button class="tab" data-tab="achievements" data-i18n="achievements">Achievements</button>
+      </div>
+      <div id="shop-body" class="shop-grid"></div>
+      <div class="row-btns" style="margin-top:14px">
+        <button class="btn gold" id="btn-restock" data-i18n="restock">Restock All</button>
+        <button class="btn" id="btn-shop-close" data-i18n="closeShop">Close Shop</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-summary" class="modal-wrap hidden">
+    <div class="panel">
+      <div class="brand" style="font-size:48px" data-i18n="dayEnd">Stall Closed</div>
+      <div class="subtitle" id="summary-weather"></div>
+      <div class="summary-grid" id="summary-grid"></div>
+      <div class="row-btns">
+        <button class="btn gold" id="btn-next-day" data-i18n="nextDay">Open Tomorrow</button>
+        <button class="btn" id="btn-summary-shop" data-i18n="shop">Bazaar Shop</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-how" class="modal-wrap hidden">
+    <div class="panel">
+      <div class="brand" style="font-size:48px" data-i18n="how">How to Play</div>
+      <p class="how-body" data-i18n="howBody"></p>
+      <div class="klist">
+        <div><b>1–9</b> cook recipes</div>
+        <div><b>Space</b> serve matching order</div>
+        <div><b>WASD</b> move camera</div>
+        <div><b>Esc</b> pause / back</div>
+        <div><b>C</b> reset camera</div>
+        <div><b>F</b> fullscreen</div>
+      </div>
+      <div class="row-btns" style="margin-top:16px">
+        <button class="btn gold" id="btn-how-close" data-i18n="back">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-settings" class="modal-wrap hidden">
+    <div class="panel">
+      <div class="brand" style="font-size:48px" data-i18n="settings">Settings</div>
+      <div class="settings-grid" style="margin-top:12px">
+        <div class="set-row"><span data-i18n="lang">Language</span>
+          <span>
+            <button class="btn small" id="btn-en">English</button>
+            <button class="btn small" id="btn-hi">हिन्दी</button>
+          </span>
+        </div>
+        <div class="set-row"><span data-i18n="sfx">Sound</span><button class="btn small" id="btn-sfx">On</button></div>
+        <div class="set-row"><span data-i18n="music">Music</span><button class="btn small" id="btn-music">On</button></div>
+        <div class="set-row"><span data-i18n="quality">Quality</span>
+          <span>
+            <button class="btn small" data-q="low">Low</button>
+            <button class="btn small" data-q="med">Med</button>
+            <button class="btn small" data-q="high">High</button>
+          </span>
+        </div>
+        <div class="set-row"><span data-i18n="fullscreen">Fullscreen</span><button class="btn small" id="btn-fs" data-i18n="fullscreen">Fullscreen</button></div>
+        <div class="set-row"><span data-i18n="resetSave">Reset Save</span><button class="btn small" id="btn-reset" data-i18n="resetSave">Reset Save</button></div>
+      </div>
+      <div class="row-btns" style="margin-top:16px">
+        <button class="btn gold" id="btn-set-close" data-i18n="back">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-tutorial" class="modal-wrap hidden">
+    <div class="panel">
+      <div class="brand" style="font-size:48px" data-i18n="tutorialTitle">Run the stall</div>
+      <p class="how-body" data-i18n="tutorial"></p>
+      <button class="btn gold" id="btn-tut-ok" data-i18n="gotIt">Got it — let’s cook</button>
+    </div>
+  </div>
+
+  <div id="modal-confirm" class="modal-wrap hidden">
+    <div class="panel">
+      <p class="how-body" id="confirm-text"></p>
+      <div class="row-btns">
+        <button class="btn gold" id="confirm-yes" data-i18n="yes">Yes</button>
+        <button class="btn ghost" id="confirm-no" data-i18n="no">No</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
