@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0b0f17" />
+    <meta name="description" content="Stall Racer - a 3D arcade car racing game that runs in your browser." />
+    <title>Stall Racer · 3D Car Racing</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏁</text></svg>"
+    />
+  </head>
+  <body>
+    <div id="game"></div>
+
+    <!-- Loading -->
+    <div id="loading" class="screen">
+      <div class="loading-inner">
+        <div class="logo"><span class="t1">STALL</span><span class="t2">RACER</span></div>
+        <div class="loading-bar"><i></i></div>
+        <p id="loading-text">Building the circuit…</p>
+      </div>
+    </div>
+
+    <!-- In-race HUD -->
+    <div id="hud" class="hidden">
+      <div class="hud-tl">
+        <div class="hud-pos">
+          <span id="hud-pos">1</span><sup id="hud-pos-suf">st</sup><span id="hud-pos-of" class="of">/6</span>
+        </div>
+        <div class="hud-lap">LAP <b id="hud-lap">1</b><span class="of">/<span id="hud-laps">3</span></span></div>
+        <ol id="hud-standings"></ol>
+      </div>
+      <div class="hud-tr">
+        <div class="row"><label>TIME</label><b id="hud-time">0:00.00</b></div>
+        <div class="row"><label>LAP</label><span id="hud-laptime">-:--.--</span></div>
+        <div class="row"><label>BEST</label><span id="hud-best">-:--.--</span></div>
+      </div>
+      <canvas id="minimap"></canvas>
+      <canvas id="speedo"></canvas>
+      <div id="hud-center"></div>
+      <div id="hud-toast"></div>
+      <div id="hud-wrongway">WRONG WAY!</div>
+      <div class="hud-hint">
+        <kbd>C</kbd> camera <kbd>R</kbd> reset <kbd>Esc</kbd> pause <kbd>M</kbd> mute
+      </div>
+
+      <div id="touch" class="touch">
+        <div class="touch-steer">
+          <button data-control="left" aria-label="Steer left"><svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5 8 1v8z"/></svg></button>
+          <button data-control="right" aria-label="Steer right"><svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M8.5 5 2 9V1z"/></svg></button>
+        </div>
+        <div class="touch-pedals">
+          <div class="touch-col">
+            <button data-control="boost" class="small" aria-label="Nitro">NITRO</button>
+            <button data-control="brake" aria-label="Brake"><svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5 1 2h8z"/></svg></button>
+          </div>
+          <div class="touch-col">
+            <button data-control="handbrake" class="small" aria-label="Drift">DRIFT</button>
+            <button data-control="throttle" class="gas" aria-label="Accelerate"><svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8H1z"/></svg></button>
+          </div>
+        </div>
+        <button class="touch-pause" data-action="pause" aria-label="Pause"><svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.5h2.2v7H2zM5.8 1.5H8v7H5.8z"/></svg></button>
+        <button class="touch-cam" data-action="camera" aria-label="Camera">CAM</button>
+      </div>
+    </div>
+
+    <!-- Main menu -->
+    <div id="menu" class="screen hidden">
+      <div class="menu-panel">
+        <div class="menu-col">
+          <h1 class="title"><span class="t1">STALL</span><span class="t2">RACER</span></h1>
+          <p class="tagline">3D arcade racing · right in your browser</p>
+
+          <div class="section-label">Choose your car</div>
+          <div class="car-select">
+            <button class="arrow" id="car-prev" aria-label="Previous car">‹</button>
+            <div class="car-card">
+              <div class="car-swatch" id="car-swatch"></div>
+              <div class="car-info">
+                <div class="car-name" id="car-name">Vortex GT</div>
+                <div class="car-tagline" id="car-tagline">Balanced all-rounder</div>
+              </div>
+            </div>
+            <button class="arrow" id="car-next" aria-label="Next car">›</button>
+          </div>
+          <div class="stats">
+            <div class="stat"><label>Top speed</label><div class="bar"><i id="stat-speed"></i></div></div>
+            <div class="stat"><label>Acceleration</label><div class="bar"><i id="stat-accel"></i></div></div>
+            <div class="stat"><label>Handling</label><div class="bar"><i id="stat-handling"></i></div></div>
+          </div>
+        </div>
+
+        <div class="menu-col">
+          <div class="options">
+            <div class="opt"><label>Laps</label><div class="seg" data-setting="laps"></div></div>
+            <div class="opt"><label>Opponents</label><div class="seg" data-setting="opponents"></div></div>
+            <div class="opt"><label>Difficulty</label><div class="seg" data-setting="difficulty"></div></div>
+          </div>
+
+          <button id="start-btn" class="btn primary"><span>START RACE</span></button>
+          <div class="record" id="menu-record">Best lap: -:--.--</div>
+        </div>
+      </div>
+
+      <div class="controls-card">
+        <h3>Controls</h3>
+        <ul>
+          <li><span class="keys"><kbd>W</kbd><kbd><svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8H1z"/></svg></kbd></span> Accelerate</li>
+          <li><span class="keys"><kbd>S</kbd><kbd><svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5 1 2h8z"/></svg></kbd></span> Brake / reverse</li>
+          <li><span class="keys"><kbd>A</kbd><kbd>D</kbd><kbd><svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5 8 1v8z"/></svg></kbd><kbd><svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M8.5 5 2 9V1z"/></svg></kbd></span> Steer</li>
+          <li><span class="keys"><kbd>Space</kbd></span> Handbrake / drift</li>
+          <li><span class="keys"><kbd>Shift</kbd></span> Nitro boost</li>
+          <li><span class="keys"><kbd>C</kbd></span> Change camera</li>
+          <li><span class="keys"><kbd>R</kbd></span> Reset car to track</li>
+          <li><span class="keys"><kbd>Esc</kbd></span> Pause</li>
+        </ul>
+        <p class="tip">Drift with the handbrake to refill nitro faster. Gamepads work too.</p>
+      </div>
+    </div>
+
+    <!-- Pause -->
+    <div id="pause" class="screen hidden">
+      <div class="dialog">
+        <h2>PAUSED</h2>
+        <button class="btn primary" id="resume-btn"><span>RESUME</span></button>
+        <button class="btn" id="restart-btn"><span>RESTART RACE</span></button>
+        <button class="btn" id="quit-btn"><span>MAIN MENU</span></button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="screen hidden">
+      <div class="dialog wide">
+        <h2 id="results-title">RACE RESULTS</h2>
+        <p id="results-sub"></p>
+        <div class="table-wrap">
+          <table class="results-table">
+            <thead>
+              <tr><th>Pos</th><th>Driver</th><th>Car</th><th>Time</th><th>Best lap</th></tr>
+            </thead>
+            <tbody id="results-body"></tbody>
+          </table>
+        </div>
+        <div class="dialog-buttons">
+          <button class="btn primary" id="again-btn"><span>RACE AGAIN</span></button>
+          <button class="btn" id="menu-btn"><span>MAIN MENU</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="corner-buttons">
+      <button id="mute-btn" class="icon-btn" title="Mute (M)" aria-label="Toggle sound">
+        <svg class="ico on" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg class="ico off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z"/><path d="m16 9 6 6m0-6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <noscript>Stall Racer needs JavaScript and WebGL to run.</noscript>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
